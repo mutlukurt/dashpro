@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/dashpro/static/css/main.86a68923.css",
+    "main.js": "/dashpro/static/js/main.52e21449.js",
+    "index.html": "/dashpro/index.html",
+    "main.86a68923.css.map": "/dashpro/static/css/main.86a68923.css.map",
+    "main.52e21449.js.map": "/dashpro/static/js/main.52e21449.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.86a68923.css",
+    "static/js/main.52e21449.js"
+  ]
+}
