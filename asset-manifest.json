@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/dashpro/static/css/main.86a68923.css",
-    "main.js": "/dashpro/static/js/main.52e21449.js",
+    "main.css": "/dashpro/static/css/main.2294fb89.css",
+    "main.js": "/dashpro/static/js/main.899b3e40.js",
     "index.html": "/dashpro/index.html",
-    "main.86a68923.css.map": "/dashpro/static/css/main.86a68923.css.map",
-    "main.52e21449.js.map": "/dashpro/static/js/main.52e21449.js.map"
+    "main.2294fb89.css.map": "/dashpro/static/css/main.2294fb89.css.map",
+    "main.899b3e40.js.map": "/dashpro/static/js/main.899b3e40.js.map"
   },
   "entrypoints": [
-    "static/css/main.86a68923.css",
-    "static/js/main.52e21449.js"
+    "static/css/main.2294fb89.css",
+    "static/js/main.899b3e40.js"
   ]
 }
