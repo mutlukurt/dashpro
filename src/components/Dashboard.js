@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Home, BarChart3, Users, Settings, Bell, Search, Menu, X, 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Eye, Calendar,
-  Filter, ChevronDown, MoreHorizontal, ExternalLink, Plus, Download
+  Filter, ChevronDown, MoreHorizontal, ExternalLink, Plus, Download,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
@@ -10,20 +11,50 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeMenuItem, setActiveMenuItem] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection and responsive handling
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      const handleClickOutside = (event) => {
+        if (!event.target.closest('.sidebar') && !event.target.closest('.mobile-menu-button')) {
+          setSidebarOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isMobile, sidebarOpen]);
 
   // Mock data
   const metrics = [
-    { id: 1, title: 'Total Revenue', value: '$847,392', change: '+12.5%', trend: 'up', color: 'from-blue-500 to-cyan-400' },
-    { id: 2, title: 'Active Users', value: '24,891', change: '+8.2%', trend: 'up', color: 'from-emerald-500 to-teal-400' },
-    { id: 3, title: 'Conversion Rate', value: '3.84%', change: '-2.1%', trend: 'down', color: 'from-purple-500 to-violet-400' },
-    { id: 4, title: 'Avg Order Value', value: '$156.32', change: '+5.7%', trend: 'up', color: 'from-orange-500 to-red-400' },
+    { id: 1, title: 'Total Revenue', value: '$847,392', change: '+12.5%', trend: 'up', color: 'from-blue-500 to-cyan-400', icon: DollarSign },
+    { id: 2, title: 'Active Users', value: '24,891', change: '+8.2%', trend: 'up', color: 'from-emerald-500 to-teal-400', icon: Users },
+    { id: 3, title: 'Conversion Rate', value: '3.84%', change: '-2.1%', trend: 'down', color: 'from-purple-500 to-violet-400', icon: BarChart3 },
+    { id: 4, title: 'Avg Order Value', value: '$156.32', change: '+5.7%', trend: 'up', color: 'from-orange-500 to-red-400', icon: ShoppingCart },
   ];
 
   const chartData = [
@@ -81,20 +112,35 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <div className={`fixed left-0 top-0 h-full bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 transition-all duration-300 z-50 ${
-        sidebarOpen ? 'w-64' : 'w-20'
+      <div className={`sidebar mobile-sidebar bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 ${
+        sidebarOpen ? 'translate-x-0' : 'mobile-sidebar-closed'
       }`}>
-        <div className="p-6">
-          <div className="flex items-center space-x-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
-              <BarChart3 className="text-white" size={20} />
-            </div>
-            {sidebarOpen && (
-              <div>
-                <h1 className="text-xl font-bold text-white">DashPro</h1>
-                <p className="text-xs text-slate-400">Enterprise Suite</p>
+        <div className="mobile-card">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
+                <BarChart3 className="text-white" size={20} />
               </div>
+              {sidebarOpen && (
+                <div>
+                  <h1 className="text-xl font-bold text-white">DashPro</h1>
+                  <p className="text-xs text-slate-400">Enterprise Suite</p>
+                </div>
+              )}
+            </div>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors touch-target"
+              >
+                <X className="text-slate-300" size={20} />
+              </button>
             )}
           </div>
 
@@ -102,8 +148,11 @@ const Dashboard = () => {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveMenuItem(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                onClick={() => {
+                  setActiveMenuItem(item.id);
+                  if (isMobile) setSidebarOpen(false);
+                }}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 touch-target ${
                   activeMenuItem === item.id
                     ? 'bg-gradient-to-r from-blue-500/20 to-cyan-400/20 border border-blue-500/30 text-blue-300'
                     : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
@@ -118,42 +167,42 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className="mobile-main">
         {/* Header */}
-        <header className="bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50 px-6 py-4 relative z-50">
+        <header className="mobile-header border-b border-slate-700/50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                className="mobile-menu-button p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors touch-target"
               >
                 <Menu className="text-slate-300" size={20} />
               </button>
               
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="text"
                   placeholder="Search anything..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:bg-slate-700 transition-all w-80"
+                  className="mobile-search pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:bg-slate-700 transition-all"
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors relative"
+                  className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors relative touch-target"
                 >
                   <Bell className="text-slate-300" size={20} />
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 top-12 w-80 bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl z-[100]">
+                  <div className="absolute right-0 top-12 w-80 max-w-[calc(100vw-2rem)] bg-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl z-[100]">
                     <div className="p-4 border-b border-slate-700/50">
                       <h3 className="font-semibold text-white">Notifications</h3>
                     </div>
@@ -177,8 +226,8 @@ const Dashboard = () => {
                 )}
               </div>
 
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium text-white">Alex Johnson</p>
                   <p className="text-xs text-slate-400">Administrator</p>
                 </div>
@@ -191,20 +240,20 @@ const Dashboard = () => {
         </header>
 
         {/* Dashboard Content */}
-        <main className="p-6 space-y-6">
+        <main className="mobile-container space-y-4 sm:space-y-6 py-4 sm:py-6">
           {/* Welcome Section */}
-          <div className="bg-gradient-to-r from-blue-600/10 to-cyan-600/10 border border-blue-500/20 rounded-2xl p-6 backdrop-blur-sm">
-            <div className="flex justify-between items-center">
+          <div className="bg-gradient-to-r from-blue-600/10 to-cyan-600/10 border border-blue-500/20 rounded-2xl mobile-card backdrop-blur-sm">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Welcome back, Alex! 👋</h2>
-                <p className="text-slate-300">Here's what's happening with your business today.</p>
+                <h2 className="mobile-heading font-bold text-white mb-2">Welcome back, Alex! 👋</h2>
+                <p className="text-slate-300 mobile-text">Here's what's happening with your business today.</p>
               </div>
-              <div className="flex space-x-3">
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <button className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 touch-target">
                   <Plus size={16} />
                   <span>New Report</span>
                 </button>
-                <button className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center space-x-2">
+                <button className="px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 touch-target">
                   <Download size={16} />
                   <span>Export</span>
                 </button>
@@ -213,12 +262,12 @@ const Dashboard = () => {
           </div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid mobile-metrics gap-4 sm:gap-6">
             {metrics.map((metric) => (
-              <div key={metric.id} className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+              <div key={metric.id} className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${metric.color} flex items-center justify-center`}>
-                    <DollarSign className="text-white" size={20} />
+                    <metric.icon className="text-white" size={20} />
                   </div>
                   {metric.trend === 'up' ? (
                     <TrendingUp className="text-emerald-400" size={20} />
@@ -228,7 +277,7 @@ const Dashboard = () => {
                 </div>
                 <h3 className="text-slate-400 text-sm font-medium mb-2">{metric.title}</h3>
                 <div className="flex items-baseline space-x-2">
-                  <p className="text-2xl font-bold text-white">{metric.value}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">{metric.value}</p>
                   <span className={`text-sm font-medium ${metric.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
                     {metric.change}
                   </span>
@@ -238,22 +287,22 @@ const Dashboard = () => {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid mobile-charts gap-4 sm:gap-6">
             {/* Revenue Chart */}
-            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-white">Revenue Overview</h3>
+            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-3 sm:space-y-0">
+                <h3 className="mobile-heading font-semibold text-white">Revenue Overview</h3>
                 <select
                   value={selectedTimeRange}
                   onChange={(e) => setSelectedTimeRange(e.target.value)}
-                  className="bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-blue-500/50"
+                  className="bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50 touch-target"
                 >
                   <option value="7d">7 Days</option>
                   <option value="30d">30 Days</option>
                   <option value="90d">90 Days</option>
                 </select>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={300} className="mobile-chart">
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -270,9 +319,9 @@ const Dashboard = () => {
             </div>
 
             {/* User Activity Chart */}
-            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-6">User Activity</h3>
-              <ResponsiveContainer width="100%" height={300}>
+            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card">
+              <h3 className="mobile-heading font-semibold text-white mb-6">User Activity</h3>
+              <ResponsiveContainer width="100%" height={300} className="mobile-chart">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="name" stroke="#9CA3AF" />
@@ -284,26 +333,26 @@ const Dashboard = () => {
           </div>
 
           {/* Data Table and Activity Feed */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid mobile-layout gap-4 sm:gap-6">
             {/* Users Table */}
-            <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-white">Recent Users</h3>
+            <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-3 sm:space-y-0">
+                <h3 className="mobile-heading font-semibold text-white">Recent Users</h3>
                 <div className="flex space-x-2">
-                  <button className="p-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors">
+                  <button className="p-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors touch-target">
                     <Filter className="text-slate-300" size={16} />
                   </button>
-                  <button className="p-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors">
+                  <button className="p-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors touch-target">
                     <MoreHorizontal className="text-slate-300" size={16} />
                   </button>
                 </div>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="mobile-table">
+                <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-slate-700/50">
-                      <th className="text-left py-3 px-4 text-slate-300 font-medium cursor-pointer hover:text-white transition-colors"
+                      <th className="text-left py-3 px-4 text-slate-300 font-medium cursor-pointer hover:text-white transition-colors touch-target"
                           onClick={() => {
                             setSortField('name');
                             setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -347,8 +396,8 @@ const Dashboard = () => {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-6">Recent Activity</h3>
+            <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card">
+              <h3 className="mobile-heading font-semibold text-white mb-6">Recent Activity</h3>
               <div className="space-y-4">
                 {recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-slate-700/30 transition-colors">
@@ -369,11 +418,11 @@ const Dashboard = () => {
           </div>
 
           {/* Device Analytics */}
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
-            <h3 className="text-xl font-semibold text-white mb-6">Device Analytics</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl mobile-card">
+            <h3 className="mobile-heading font-semibold text-white mb-6">Device Analytics</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               <div className="flex justify-center">
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={250} className="mobile-chart">
                   <PieChart>
                     <Pie
                       data={pieData}
